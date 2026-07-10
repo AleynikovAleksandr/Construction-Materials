@@ -1,0 +1,25 @@
+html, body { margin: 0; padding: 0; height: 100%; }
+* { box-sizing: border-box; }
+@keyframes glassIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+input::placeholder { color: rgba(60,60,80,0.45); }
+input:focus { outline: none; }
+#login-root {
+  min-height: 100vh; width: 100%;
+  background-image: url("../img/login_bg.jpg");
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, sans-serif;
+  padding: 48px clamp(16px, 4vw, 64px);
+}
+input:focus.glass-input {
+  border: 1px solid rgba(60,120,255,0.6) !important; background: rgba(255,255,255,0.75) !important;
+  box-shadow: 0 0 0 4px rgba(60,120,255,0.15), inset 0 1px 3px rgba(30,20,60,0.04) !important;
+}
+.eye-btn:hover { background: rgba(120,120,140,0.12) !important; }
+.eye-btn:active { background: rgba(120,120,140,0.2) !important; }
+.submit-btn:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(45,100,235,0.45), inset 0 1px 0 rgba(255,255,255,0.35); }
+.submit-btn:disabled { opacity: 0.75; cursor: wait; }
+@media (max-width: 720px) {
+  #login-root { justify-content: center; padding: 24px 16px; }
+  #login-card { width: 100%; }
+}
