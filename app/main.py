@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-import traceback
 from pathlib import Path
 
 import webview
@@ -13,25 +12,17 @@ from app.api import Api  # noqa: E402
 from app.core.render import render_login  # noqa: E402
 from app.core.static_server import ensure_static_server  # noqa: E402
 
-ERROR_PAGE = """<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Ошибка запуска</title></head>
-<body style="font-family: monospace; padding: 24px; white-space: pre-wrap; background: #1c1c1e; color: #ff6b6b;">
-<h2 style="color: #fff;">Не удалось загрузить приложение</h2>
-{traceback}
-</body></html>"""
-
 
 def _on_ready(window: webview.Window, api: Api):
     api.set_window(window)
-    try:
-        window.load_html(render_login(), base_uri=ensure_static_server())
-    except Exception:
-        tb = traceback.format_exc()
-        print(tb, file=sys.stderr)
-        window.load_html(ERROR_PAGE.format(traceback=tb))
+    window.load_html(render_login(), base_uri=ensure_static_server())
 
 
 def main():
+    # debug=True keeps "Inspect Element" available in the window's context menu,
+    # but devtools should stay closed until the user opens them on purpose.
+    webview.settings['OPEN_DEVTOOLS_IN_DEBUG'] = False
+
     api = Api()
     window = webview.create_window(
         "ООО «СтройМатериалы»",
