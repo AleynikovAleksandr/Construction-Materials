@@ -8,6 +8,7 @@ from datetime import datetime
 from app.auth import authenticate
 from app.db.models import Order, OrderItem, Product
 from app.db.session import get_session
+from app.permissions import has_permission
 from app.render import STATIC_BASE_URI, STATIC_DIR, render_dashboard, render_login
 
 PRODUCTS_IMG_DIR = STATIC_DIR / "img" / "products"
@@ -104,7 +105,7 @@ class Api:
             session.close()
 
     def create_product(self, data: dict) -> dict:
-        if self._role() != "admin":
+        if not has_permission(self._role(), "EDIT_PRODUCTS"):
             return {"ok": False, "error": "Недостаточно прав"}
         session = get_session()
         try:
@@ -126,7 +127,7 @@ class Api:
             session.close()
 
     def update_product(self, article: str, data: dict) -> dict:
-        if self._role() != "admin":
+        if not has_permission(self._role(), "EDIT_PRODUCTS"):
             return {"ok": False, "error": "Недостаточно прав"}
         session = get_session()
         try:
@@ -155,7 +156,7 @@ class Api:
             session.close()
 
     def delete_product(self, article: str) -> dict:
-        if self._role() != "admin":
+        if not has_permission(self._role(), "EDIT_PRODUCTS"):
             return {"ok": False, "error": "Недостаточно прав"}
         session = get_session()
         try:
@@ -170,7 +171,7 @@ class Api:
     # -------------------------------------------------------------- orders
     def get_orders(self) -> list[dict]:
         """Orders are staff-only data — unlike the product catalog, guest/client get nothing."""
-        if self._role() not in ("manager", "admin"):
+        if not has_permission(self._role(), "VIEW_ORDERS"):
             return []
         session = get_session()
         try:
@@ -180,7 +181,7 @@ class Api:
             session.close()
 
     def create_order(self, data: dict) -> dict:
-        if self._role() != "admin":
+        if not has_permission(self._role(), "EDIT_ORDERS"):
             return {"ok": False, "error": "Недостаточно прав"}
         session = get_session()
         try:
@@ -201,7 +202,7 @@ class Api:
             session.close()
 
     def update_order(self, order_no: int, data: dict) -> dict:
-        if self._role() != "admin":
+        if not has_permission(self._role(), "EDIT_ORDERS"):
             return {"ok": False, "error": "Недостаточно прав"}
         session = get_session()
         try:
@@ -221,7 +222,7 @@ class Api:
             session.close()
 
     def delete_order(self, order_no: int) -> dict:
-        if self._role() != "admin":
+        if not has_permission(self._role(), "EDIT_ORDERS"):
             return {"ok": False, "error": "Недостаточно прав"}
         session = get_session()
         try:

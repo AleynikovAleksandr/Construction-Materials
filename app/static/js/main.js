@@ -1,10 +1,11 @@
 const { useState, useEffect } = React;
 
 const USER = window.__USER__ || { role: "guest", fio: "Гость", roleLabel: "Гость" };
-const CAN_FILTER_SORT_SEARCH = USER.role === "manager" || USER.role === "admin";
-const CAN_EDIT_PRODUCTS = USER.role === "admin";
-const CAN_VIEW_ORDERS = USER.role === "manager" || USER.role === "admin";
-const CAN_EDIT_ORDERS = USER.role === "admin";
+const { hasPermission } = window.Permissions;
+const CAN_FILTER_SORT_SEARCH = hasPermission(USER.role, "FILTER_SORT_SEARCH");
+const CAN_EDIT_PRODUCTS = hasPermission(USER.role, "EDIT_PRODUCTS");
+const CAN_VIEW_ORDERS = hasPermission(USER.role, "VIEW_ORDERS");
+const CAN_EDIT_ORDERS = hasPermission(USER.role, "EDIT_ORDERS");
 const DISCOUNT_HIGHLIGHT = "#F4A460";
 
 const A1 = "#ffd9a8";   // accentStart
