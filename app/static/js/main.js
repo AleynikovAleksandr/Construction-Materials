@@ -8,6 +8,7 @@ const CAN_VIEW_ORDERS = hasPermission(USER.role, "VIEW_ORDERS");
 const CAN_EDIT_ORDERS = hasPermission(USER.role, "EDIT_ORDERS");
 const DISCOUNT_HIGHLIGHT = "#F4A460";
 const COMPANY_NAME = "ООО «СтройМатериалы»";
+const PLACEHOLDER_PHOTO = "img/placeholder.png";
 
 const A1 = "#ffd9a8";   // accentStart
 const A2 = "#f5842e";    // accentEnd
@@ -284,9 +285,7 @@ function App() {
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } }}
                   style={{ display: "flex", alignItems: "stretch", gap: 24, width: "100%", background: cardBg, borderRadius: 24, border: isSel ? "2px solid " + A2 : "2px solid transparent", padding: 18, cursor: "pointer",
                     boxShadow: isSel ? NEUMO_RAISED + ", 0 0 0 4px " + A1 + "55" : NEUMO_RAISED, transition: "transform 0.2s ease, box-shadow 0.2s ease" }}>
-                  <div style={{ width: 200, minHeight: 140, flexShrink: 0, borderRadius: 16, backgroundColor: "#e3e3e6", backgroundImage: r.photo ? "url(" + r.photo + ")" : "none", backgroundSize: "cover", backgroundPosition: "center", boxShadow: "inset 2px 2px 6px rgba(174,174,192,0.25), inset -2px -2px 6px rgba(255,255,255,0.6)", display: "grid", placeItems: "center" }}>
-                    <span style={{ fontSize: 14, color: "#8a8a8e" }}>{r.photo ? "" : "Нет фото"}</span>
-                  </div>
+                  <div style={{ width: 200, minHeight: 140, flexShrink: 0, borderRadius: 16, backgroundColor: "#e3e3e6", backgroundImage: "url(" + (r.photo || PLACEHOLDER_PHOTO) + ")", backgroundSize: "cover", backgroundPosition: "center", boxShadow: "inset 2px 2px 6px rgba(174,174,192,0.25), inset -2px -2px 6px rgba(255,255,255,0.6)" }} />
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.3px", margin: 0 }}>{r.name}</h2>
@@ -417,9 +416,7 @@ function App() {
                       style={{ border: "none", borderRadius: 14, background: "#ececef", boxShadow: "inset 2px 2px 6px rgba(174,174,192,0.3), inset -2px -2px 6px rgba(255,255,255,0.7)", padding: "12px 16px", fontSize: 15, color: "#1c1c1e", fontFamily: "inherit", outline: "none", resize: "vertical" }} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 14, gridColumn: "1 / -1" }}>
-                    <div style={{ width: 96, height: 68, flexShrink: 0, borderRadius: 14, backgroundColor: "#e3e3e6", backgroundImage: form.photo ? "url(" + form.photo + ")" : "none", backgroundSize: "cover", backgroundPosition: "center", boxShadow: "inset 2px 2px 6px rgba(174,174,192,0.3), inset -2px -2px 6px rgba(255,255,255,0.7)", display: "grid", placeItems: "center" }}>
-                      <span style={{ fontSize: 12, color: "#8a8a8e" }}>{form.photo ? "" : "Нет фото"}</span>
-                    </div>
+                    <div style={{ width: 96, height: 68, flexShrink: 0, borderRadius: 14, backgroundColor: "#e3e3e6", backgroundImage: "url(" + (form.photo || PLACEHOLDER_PHOTO) + ")", backgroundSize: "cover", backgroundPosition: "center", boxShadow: "inset 2px 2px 6px rgba(174,174,192,0.3), inset -2px -2px 6px rgba(255,255,255,0.7)" }} />
                     <label style={{ height: 42, display: "inline-flex", alignItems: "center", borderRadius: 999, background: "linear-gradient(145deg, #f6f6f9, #e9e9ec)", boxShadow: "4px 4px 12px rgba(174,174,192,0.35), -4px -4px 12px rgba(255,255,255,0.9)", padding: "0 22px", fontSize: 14, fontWeight: 600, color: "#3a3a3c", cursor: "pointer" }}>
                       Выбрать фото
                       <input type="file" accept="image/*" onChange={onPhoto} style={{ display: "none" }} />

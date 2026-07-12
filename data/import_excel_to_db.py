@@ -28,8 +28,13 @@ from app.db.session import DB_PATH, engine, get_session  # noqa: E402
 
 IMPORT_DIR = BASE_DIR / "data" / "import"
 PRODUCTS_IMG_DIR = BASE_DIR / "app" / "static" / "img" / "products"
+STATIC_IMG_DIR = BASE_DIR / "app" / "static" / "img"
 LOGO_SRC = IMPORT_DIR / "icon.png"
-LOGO_DST = BASE_DIR / "app" / "static" / "img" / "logo.png"
+LOGO_DST = STATIC_IMG_DIR / "logo.png"
+APP_ICON_SRC = IMPORT_DIR / "icon.ico"
+APP_ICON_DST = STATIC_IMG_DIR / "icon.ico"
+PLACEHOLDER_SRC = IMPORT_DIR / "picture.png"
+PLACEHOLDER_DST = STATIC_IMG_DIR / "placeholder.png"
 
 
 def _rows(ws):
@@ -180,9 +185,10 @@ def import_orders(session) -> int:
 
 def copy_static_assets():
     PRODUCTS_IMG_DIR.mkdir(parents=True, exist_ok=True)
-    LOGO_DST.parent.mkdir(parents=True, exist_ok=True)
-    if LOGO_SRC.exists():
-        shutil.copyfile(LOGO_SRC, LOGO_DST)
+    STATIC_IMG_DIR.mkdir(parents=True, exist_ok=True)
+    for src, dst in ((LOGO_SRC, LOGO_DST), (APP_ICON_SRC, APP_ICON_DST), (PLACEHOLDER_SRC, PLACEHOLDER_DST)):
+        if src.exists():
+            shutil.copyfile(src, dst)
 
 
 def main():
