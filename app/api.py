@@ -8,8 +8,8 @@ from datetime import datetime
 from app.auth import authenticate
 from app.db.models import Order, OrderItem, Product
 from app.db.session import get_session
-from app.permissions import has_permission
-from app.render import STATIC_BASE_URI, STATIC_DIR, render_dashboard, render_login
+from app.core.permissions import has_permission
+from app.core.render import STATIC_BASE_URI, STATIC_DIR, render_dashboard, render_login
 
 PRODUCTS_IMG_DIR = STATIC_DIR / "img" / "products"
 

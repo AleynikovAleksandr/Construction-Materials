@@ -1,6 +1,6 @@
 # ООО «СтройМатериалы»
 
-Десктоп-приложение (pywebview-окно + HTML/CSS/JS-интерфейс из макетов `docs/mockups/`) с БД на SQLAlchemy/SQLite, наполняемой из `import/*.xlsx`.
+Десктоп-приложение (pywebview-окно + HTML/CSS/JS-интерфейс) с БД на SQLAlchemy/SQLite, наполняемой из `data/import/*.xlsx`.
 
 ## Установка
 
@@ -13,10 +13,10 @@ pip install -r requirements.txt
 ## Наполнение БД из Excel
 
 ```bash
-python scripts/import_excel_to_db.py
+python data/import_excel_to_db.py
 ```
 
-Создаёт `data/stroymaterialy.db`, копирует фото товаров и логотип в `app/static/img/`. Запускать заново при изменении файлов в `import/`.
+Создаёт `data/stroymaterialy.db`, копирует фото товаров и логотип в `app/static/img/`. Запускать заново при изменении файлов в `data/import/`.
 
 ## Запуск приложения
 
@@ -24,7 +24,7 @@ python scripts/import_excel_to_db.py
 python app/main.py
 ```
 
-## Роли (логин/пароль — из `import/user_import.xlsx`)
+## Роли (логин/пароль — из `data/import/user_import.xlsx`)
 
 - **Гость** — вход не требуется, ссылка «Просмотр товаров как гость» на экране входа. Товары без фильтрации/сортировки/поиска.
 - **Авторизированный клиент** — товары без фильтрации/сортировки/поиска.
@@ -34,7 +34,10 @@ python app/main.py
 ## Структура
 
 - `app/db/` — модели SQLAlchemy и сессия.
+- `app/core/permissions.py` — таблица прав по ролям (зеркало `app/static/js/permissions.js`).
+- `app/core/render.py` — рендер Jinja2-шаблонов в HTML-строки.
 - `app/api.py` — методы, вызываемые из JS через `pywebview.api.*`.
 - `app/templates/` — HTML-оболочки (Jinja2), рендерятся в Python и грузятся в окно через `window.load_html`.
-- `app/static/css`, `app/static/js` — стили и логика интерфейса, извлечённые из макетов `docs/mockups/`.
-- `scripts/import_excel_to_db.py` — импорт данных из `import/*.xlsx`.
+- `app/static/css`, `app/static/js` — стили и логика интерфейса.
+- `data/import/` — исходные Excel-файлы и фото для импорта.
+- `data/import_excel_to_db.py` — импорт данных из `data/import/*.xlsx` в `data/stroymaterialy.db`.

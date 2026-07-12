@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from app.db.models import ROLE_LABELS
 
-APP_DIR = Path(__file__).resolve().parent
+APP_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = APP_DIR / "templates"
 STATIC_DIR = APP_DIR / "static"
 STATIC_BASE_URI = STATIC_DIR.as_uri() + "/"

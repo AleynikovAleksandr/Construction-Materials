@@ -9,7 +9,7 @@ APP_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(APP_DIR.parent))
 
 from app.api import Api  # noqa: E402
-from app.render import STATIC_BASE_URI, render_login  # noqa: E402
+from app.core.render import STATIC_BASE_URI, render_login  # noqa: E402
 
 
 def _on_ready(window: webview.Window, api: Api):

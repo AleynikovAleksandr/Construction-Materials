@@ -1,6 +1,6 @@
-"""Import demo data from import/*.xlsx into the SQLite database via SQLAlchemy.
+"""Import demo data from data/import/*.xlsx into the SQLite database via SQLAlchemy.
 
-Usage: python scripts/import_excel_to_db.py
+Usage: python data/import_excel_to_db.py
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from app.db.models import (  # noqa: E402
 )
 from app.db.session import DB_PATH, engine, get_session  # noqa: E402
 
-IMPORT_DIR = BASE_DIR / "import"
+IMPORT_DIR = BASE_DIR / "data" / "import"
 PRODUCTS_IMG_DIR = BASE_DIR / "app" / "static" / "img" / "products"
 LOGO_SRC = IMPORT_DIR / "icon.png"
 LOGO_DST = BASE_DIR / "app" / "static" / "img" / "logo.png"
