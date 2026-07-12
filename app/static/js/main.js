@@ -7,6 +7,7 @@ const CAN_EDIT_PRODUCTS = hasPermission(USER.role, "EDIT_PRODUCTS");
 const CAN_VIEW_ORDERS = hasPermission(USER.role, "VIEW_ORDERS");
 const CAN_EDIT_ORDERS = hasPermission(USER.role, "EDIT_ORDERS");
 const DISCOUNT_HIGHLIGHT = "#F4A460";
+const COMPANY_NAME = "ООО «СтройМатериалы»";
 
 const A1 = "#ffd9a8";   // accentStart
 const A2 = "#f5842e";    // accentEnd
@@ -195,9 +196,9 @@ function App() {
       <div id="topbar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", paddingBottom: 22, borderBottom: "1px solid rgba(174,174,192,0.35)" }}>
         <div style={{ justifySelf: "start", display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(145deg, #f6f6f9, #e9e9ec)", boxShadow: NEUMO_RAISED, display: "grid", placeItems: "center", flexShrink: 0, padding: 6 }}>
-            <img src="img/logo.png" alt="Логотип ООО «СтройМатериалы»" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+            <img src="img/logo.png" alt={`Логотип ${COMPANY_NAME}`} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
           </div>
-          <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.3px" }}>ООО «СтройМатериалы»</span>
+          <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.3px" }}>{COMPANY_NAME}</span>
         </div>
 
         {CAN_VIEW_ORDERS ? (
