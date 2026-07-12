@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 import shutil
 import sys
+import zipfile
 from pathlib import Path
 
 import openpyxl
@@ -46,11 +47,25 @@ def _load_sheet(path: Path):
     return wb.active
 
 
+def _iter_xlsx_files():
+    """Real workbooks only - skips macOS AppleDouble companion files (._Foo.xlsx,
+    created when the repo lives in an iCloud-synced folder) and Office lock
+    files (~$Foo.xlsx, created while a workbook is open), which match the
+    *.xlsx glob but aren't valid zip archives and crash openpyxl."""
+    for path in IMPORT_DIR.glob("*.xlsx"):
+        if path.name.startswith(".") or path.name.startswith("~$"):
+            continue
+        yield path
+
+
 def find_workbook_by_header(expected_first_header: str) -> Path:
     """The two Cyrillic-named files are mangled by filesystem encoding, so we
     locate them by inspecting the header row instead of trusting the filename."""
-    for path in IMPORT_DIR.glob("*.xlsx"):
-        ws = _load_sheet(path)
+    for path in _iter_xlsx_files():
+        try:
+            ws = _load_sheet(path)
+        except zipfile.BadZipFile:
+            continue
         first_row = next(ws.iter_rows(values_only=True), None)
         if first_row and first_row[0] == expected_first_header:
             return path
@@ -120,10 +135,13 @@ def import_users(session) -> int:
 def import_pickup_points(session) -> int:
     # No fixed header label for this sheet (first row is already data) ->
     # detect it by shape: single-column sheet of comma-containing addresses.
-    for candidate in IMPORT_DIR.glob("*.xlsx"):
+    for candidate in _iter_xlsx_files():
         if candidate.name in {"Tovar.xlsx", "user_import.xlsx"}:
             continue
-        ws = _load_sheet(candidate)
+        try:
+            ws = _load_sheet(candidate)
+        except zipfile.BadZipFile:
+            continue
         if ws.dimensions.split(":")[1].startswith("A"):
             # single-column sheet -> pickup points file
             rows = [r[0] for r in _rows(ws) if r and r[0]]
