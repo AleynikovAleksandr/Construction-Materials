@@ -10,7 +10,8 @@ APP_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(APP_DIR.parent))
 
 from app.api import Api  # noqa: E402
-from app.core.render import STATIC_BASE_URI, render_login  # noqa: E402
+from app.core.render import render_login  # noqa: E402
+from app.core.static_server import ensure_static_server  # noqa: E402
 
 ERROR_PAGE = """<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Ошибка запуска</title></head>
@@ -23,7 +24,7 @@ ERROR_PAGE = """<!DOCTYPE html>
 def _on_ready(window: webview.Window, api: Api):
     api.set_window(window)
     try:
-        window.load_html(render_login(), base_uri=STATIC_BASE_URI)
+        window.load_html(render_login(), base_uri=ensure_static_server())
     except Exception:
         tb = traceback.format_exc()
         print(tb, file=sys.stderr)

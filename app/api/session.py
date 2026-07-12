@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from app.api.auth import AuthService
-from app.core.render import STATIC_BASE_URI, render_dashboard, render_login
+from app.core.render import render_dashboard, render_login
+from app.core.static_server import ensure_static_server
 
 GUEST_USER = {"id": None, "role": "guest", "fio": "Гость"}
 
@@ -46,4 +47,4 @@ class SessionService:
 
     def _navigate(self, html: str) -> None:
         if self._window:
-            self._window.load_html(html, base_uri=STATIC_BASE_URI)
+            self._window.load_html(html, base_uri=ensure_static_server())
