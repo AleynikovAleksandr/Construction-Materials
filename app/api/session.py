@@ -1,8 +1,18 @@
 from __future__ import annotations
 
+import threading
+
 from app.api.auth import AuthService
 from app.core.render import render_dashboard, render_login
 from app.core.static_server import ensure_static_server
+
+# pywebview resolves the JS promise for a js_api call (login/logout/enter_guest)
+# by evaluating JS against the page that made the call. If we navigate away
+# synchronously inside that same call, the page (and its pending callback) is
+# already gone by the time pywebview tries to deliver the return value, and it
+# throws "window.pywebview._returnValuesCallbacks[...] is not a function".
+# Delaying the navigation lets the promise resolve on the old page first.
+NAVIGATE_DELAY_SECONDS = 0.1
 
 GUEST_USER = {"id": None, "role": "guest", "fio": "Гость"}
 
@@ -46,5 +56,10 @@ class SessionService:
         return {"ok": True}
 
     def _navigate(self, html: str) -> None:
-        if self._window:
-            self._window.load_html(html, base_uri=ensure_static_server())
+        if not self._window:
+            return
+        timer = threading.Timer(
+            NAVIGATE_DELAY_SECONDS, self._window.load_html, args=(html,), kwargs={"base_uri": ensure_static_server()}
+        )
+        timer.daemon = True
+        timer.start()
