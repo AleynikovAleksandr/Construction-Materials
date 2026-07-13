@@ -78,26 +78,42 @@ pgloader выведет отчёт: сколько таблиц/строк пе�
 
 ### 5. Переключить приложение на PostgreSQL
 
-```bash
-cp .env.example .env
-```
+Сейчас `app/db/session.py` подключается только к `data/stroymaterialy.db` — это осознанно
+не менялось в коде. Чтобы после переноса данных приложение реально заработало на PostgreSQL,
+нужно руками:
 
-По умолчанию в `.env.example` уже стоит `DATABASE_URL` на базу `stroymaterialy` из шага 2 —
-менять ничего не нужно, если не меняли логин/пароль/хост. `app/db/session.py` при старте
-сам подхватывает `.env` (через `python-dotenv`) и, если `DATABASE_URL` задан, подключается
-к PostgreSQL вместо `data/stroymaterialy.db`. Понадобится драйвер `psycopg2-binary` — он уже
-есть в `requirements.txt`.
+1. Поставить зависимости:
 
-```bash
-python app/main.py
-```
+   ```bash
+   pip install python-dotenv psycopg2-binary
+   ```
 
-Если `.env` нет или в нём нет `DATABASE_URL` — приложение как и раньше работает на SQLite,
-никаких изменений в коде для этого не требуется.
+2. Скопировать готовый файл подключения (там уже строка `DATABASE_URL` на базу `stroymaterialy`
+   из шага 2 — менять ничего не нужно, если не меняли логин/пароль/хост):
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Поправить `app/db/session.py`, чтобы он читал `DATABASE_URL` из `.env`, а не всегда
+   собирал строку подключения из `sqlite:///{DB_PATH}`:
+
+   ```python
+   import os
+   from dotenv import load_dotenv
+
+   load_dotenv(BASE_DIR / ".env")
+   DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DB_PATH}")
+
+   engine = create_engine(DATABASE_URL, echo=False)
+   ```
+
+После этого `python app/main.py` пойдёт в PostgreSQL. Пока этот код не добавлен —
+приложение как и раньше работает только на SQLite, что бы ни лежало в `.env`.
 
 ## Структура
 
-- `app/db/` — модели SQLAlchemy и сессия (`DATABASE_URL` из `.env`, по умолчанию SQLite).
+- `app/db/` — модели SQLAlchemy и сессия (по умолчанию SQLite, `data/stroymaterialy.db`).
 - `app/core/permissions.py` — таблица прав по ролям (зеркало `app/static/js/permissions.js`).
 - `app/core/render.py` — рендер Jinja2-шаблонов в HTML-строки.
 - `app/core/static_server.py` — локальный HTTP-сервер для `app/static/`.
