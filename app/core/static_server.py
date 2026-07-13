@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import threading
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from app.core.render import STATIC_DIR
 
@@ -19,12 +19,18 @@ def ensure_static_server() -> str:
     even though the HTML itself loads fine. Serving the same directory over
     plain HTTP sidesteps that restriction. Starts the server on first call
     and reuses it afterwards.
+
+    Uses ThreadingHTTPServer, not the plain single-threaded HTTPServer: a page
+    load fires off several parallel requests (css, multiple vendor JS files,
+    images) over keep-alive connections. A single-threaded server can only
+    service one connection at a time and stalls on the others until they time
+    out, so on repeated navigations some assets randomly fail to load.
     """
     global _base_uri
     with _lock:
         if _base_uri is None:
             handler = functools.partial(SimpleHTTPRequestHandler, directory=str(STATIC_DIR))
-            server = HTTPServer(("127.0.0.1", 0), handler)
+            server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
             threading.Thread(target=server.serve_forever, daemon=True).start()
             _base_uri = f"http://127.0.0.1:{server.server_port}/"
         return _base_uri
