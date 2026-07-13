@@ -15,27 +15,42 @@ from app.core.static_server import ensure_static_server  # noqa: E402
 APP_ICON_PATH = STATIC_DIR / "img" / "icon.ico"
 
 
-def _on_ready(window: webview.Window, api: Api):
-    api.set_window(window)
-    window.load_html(render_login(), base_uri=ensure_static_server())
+class Application:
+    """Owns the pywebview window and its js_api, and drives the initial page load."""
 
+    WINDOW_TITLE = "ООО «СтройМатериалы»"
+    WINDOW_SIZE = (1280, 860)
+    WINDOW_MIN_SIZE = (980, 640)
 
-def main():
-    # debug=True keeps "Inspect Element" available in the window's context menu,
-    # but devtools should stay closed until the user opens them on purpose.
-    webview.settings['OPEN_DEVTOOLS_IN_DEBUG'] = False
+    def __init__(self):
+        self._api = Api()
+        self._window: webview.Window | None = None
 
-    api = Api()
-    window = webview.create_window(
-        "ООО «СтройМатериалы»",
-        html="<html><body></body></html>",
-        js_api=api,
-        width=1280,
-        height=860,
-        min_size=(980, 640),
-    )
-    webview.start(_on_ready, (window, api), debug=True, icon=str(APP_ICON_PATH))
+    def run(self) -> None:
+        self._configure_devtools()
+        self._window = self._create_window()
+        webview.start(self._on_ready, debug=True, icon=str(APP_ICON_PATH))
+
+    def _configure_devtools(self) -> None:
+        # debug=True keeps "Inspect Element" available in the window's context menu,
+        # but devtools should stay closed until the user opens them on purpose.
+        webview.settings['OPEN_DEVTOOLS_IN_DEBUG'] = False
+
+    def _create_window(self) -> webview.Window:
+        width, height = self.WINDOW_SIZE
+        return webview.create_window(
+            self.WINDOW_TITLE,
+            html="<html><body></body></html>",
+            js_api=self._api,
+            width=width,
+            height=height,
+            min_size=self.WINDOW_MIN_SIZE,
+        )
+
+    def _on_ready(self) -> None:
+        self._api.set_window(self._window)
+        self._window.load_html(render_login(), base_uri=ensure_static_server())
 
 
 if __name__ == "__main__":
-    main()
+    Application().run()
