@@ -3,3 +3,7 @@ openpyxl>=3.1
 pywebview>=5.0
 Werkzeug>=3.0
 Jinja2>=3.1
+python-dotenv>=1.0
+
+# Only needed if DATABASE_URL points to PostgreSQL (see README: "Переход на PostgreSQL")
+psycopg2-binary>=2.9
