@@ -66,8 +66,7 @@ function App() {
       await reloadOrders();
       setLoading(false);
     };
-    if (window.pywebview) boot();
-    else window.addEventListener("pywebviewready", boot, { once: true });
+    window.PywebviewBridge.onPywebviewReady(boot);
   }, []);
 
   const isProducts = tab === "products";

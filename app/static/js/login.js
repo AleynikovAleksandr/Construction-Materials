@@ -6,13 +6,11 @@ function App() {
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [ready, setReady] = useState(!!window.pywebview);
+  const [ready, setReady] = useState(window.PywebviewBridge.isPywebviewApiReady());
 
   React.useEffect(() => {
     if (ready) return;
-    const onReady = () => setReady(true);
-    window.addEventListener("pywebviewready", onReady);
-    return () => window.removeEventListener("pywebviewready", onReady);
+    window.PywebviewBridge.onPywebviewReady(() => setReady(true));
   }, [ready]);
 
   // Светлая версия с заданными параметрами
