@@ -114,7 +114,7 @@ python app/main.py
 Полный список из десяти учётных записей (по три администратора и менеджера, четыре
 клиента) находится в том же Excel-файле.
 
-## Application Notes
+## Примечания к работе
 
 Замечания, которые стоит учитывать при работе с приложением.
 
@@ -144,7 +144,7 @@ python app/main.py
   отображения веб-содержимого: на Windows — WebView2, на macOS — встроенный WebKit,
   на Linux — WebKitGTK.
 
-## License
+## Лицензия
 
 Copyright (c) 2025 Aleynikov Aleksandr
 
@@ -156,7 +156,7 @@ Copyright (c) 2025 Aleynikov Aleksandr
 
 По вопросам получения разрешений обращайтесь: aleynikov.aleksandr@icloud.com
 
-## Author
+## Автор
 
 Разработчик: Алейников Александр
 Контакт: aleynikov.aleksandr@icloud.com
