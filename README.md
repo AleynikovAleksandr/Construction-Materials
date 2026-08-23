@@ -16,7 +16,7 @@ pip install -r requirements.txt
 python data/import_excel_to_db.py
 ```
 
-Создаёт `data/stroymaterialy.db` по схеме `app/db/schema.sql` и наполняет её из `data/import/*.xlsx`. Запускать заново при изменении Excel-файлов.
+Создаёт `data/materials.db` по схеме `app/db/schema.sql` и наполняет её из `data/import/*.xlsx`. Запускать заново при изменении Excel-файлов.
 
 Картинки в импорте не участвуют — фото товаров, логотип и иконка уже лежат в `app/static/img/`, а Excel лишь указывает имя файла фото.
 
