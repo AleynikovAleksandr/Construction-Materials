@@ -648,8 +648,6 @@ class OrdersView {
 
 /** Экран дашборда целиком: шапка, вкладки и оба представления. */
 class Dashboard {
-  static COMPANY_NAME = "ООО «СтройМатериалы»";
-
   constructor(root) {
     this.root = root;
     this.user = window.__USER__ || { role: "guest", fio: "Гость", roleLabel: "Гость" };
@@ -667,6 +665,7 @@ class Dashboard {
   }
 
   start() {
+    window.AppConfig.applyTitle();
     this.render();
     this.bindEvents();
 
@@ -686,9 +685,9 @@ class Dashboard {
       <div id="topbar">
         <div class="brand">
           <div class="brand-logo">
-            <img src="img/logo.png" alt="Логотип ${Format.esc(Dashboard.COMPANY_NAME)}">
+            <img src="img/logo.png" alt="Логотип ${Format.esc(window.AppConfig.COMPANY_NAME)}">
           </div>
-          <span class="brand-name">${Format.esc(Dashboard.COMPANY_NAME)}</span>
+          <span class="brand-name">${Format.esc(window.AppConfig.COMPANY_NAME)}</span>
         </div>
 
         ${this.permissions.canViewOrders ? `

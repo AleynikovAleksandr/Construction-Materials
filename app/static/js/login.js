@@ -13,6 +13,7 @@ class LoginScreen {
 
   /** Точка входа: строит разметку, вешает обработчики, ждёт готовности моста. */
   start() {
+    window.AppConfig.applyTitle("Вход");
     this.render();
     this.cacheElements();
     this.bindEvents();
