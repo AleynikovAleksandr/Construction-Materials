@@ -4,16 +4,25 @@
 // Поэтому проверка "if (window.pywebview)" ловит окно с ещё пустым api и
 // падает с "X is not a function". Ждём, пока api реально наполнится.
 
-function isPywebviewApiReady() {
-  return !!(window.pywebview && window.pywebview.api && Object.keys(window.pywebview.api).length > 0);
-}
-
-function onPywebviewReady(callback) {
-  if (isPywebviewApiReady()) {
-    callback();
-    return;
+class PywebviewBridge {
+  static isReady() {
+    return Boolean(
+      window.pywebview && window.pywebview.api && Object.keys(window.pywebview.api).length > 0
+    );
   }
-  window.addEventListener("pywebviewready", callback, { once: true });
+
+  static onReady(callback) {
+    if (PywebviewBridge.isReady()) {
+      callback();
+      return;
+    }
+    window.addEventListener("pywebviewready", callback, { once: true });
+  }
+
+  /** Методы, вызываемые из Python (pywebview.api.*). */
+  static get api() {
+    return window.pywebview && window.pywebview.api;
+  }
 }
 
-window.PywebviewBridge = { isPywebviewApiReady, onPywebviewReady };
+window.PywebviewBridge = PywebviewBridge;
