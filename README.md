@@ -16,7 +16,9 @@ pip install -r requirements.txt
 python data/import_excel_to_db.py
 ```
 
-Создаёт `data/stroymaterialy.db`, копирует фото товаров и логотип в `app/static/img/`. Запускать заново при изменении файлов в `data/import/`.
+Создаёт `data/stroymaterialy.db` по схеме `app/db/schema.sql` и наполняет её из `data/import/*.xlsx`. Запускать заново при изменении Excel-файлов.
+
+Картинки в импорте не участвуют — фото товаров, логотип и иконка уже лежат в `app/static/img/`, а Excel лишь указывает имя файла фото.
 
 ## Запуск приложения
 
@@ -24,7 +26,7 @@ python data/import_excel_to_db.py
 python app/main.py
 ```
 
-## Роли (логин/пароль — из `data/import/user_import.xlsx`)
+## Роли (логин/пароль — из `data/import/users_import.xlsx`)
 
 - **Гость** — вход не требуется, ссылка «Просмотр товаров как гость» на экране входа. Товары без фильтрации/сортировки/поиска.
 - **Авторизированный клиент** — товары без фильтрации/сортировки/поиска.
@@ -33,11 +35,14 @@ python app/main.py
 
 ## Структура
 
-- `app/db/` — модели SQLAlchemy и сессия.
+- `app/db/schema.sql` — SQL-схема всех таблиц; по ней создаётся база.
+- `app/db/models.py`, `app/db/session.py` — модели SQLAlchemy и сессия.
 - `app/core/permissions.py` — таблица прав по ролям (зеркало `app/static/js/permissions.js`).
 - `app/core/render.py` — рендер Jinja2-шаблонов в HTML-строки.
-- `app/api.py` — методы, вызываемые из JS через `pywebview.api.*`.
+- `app/core/static_server.py` — локальный HTTP-сервер для `app/static/`.
+- `app/api/` — сервисы (`AuthService`, `SessionService`, `ProductService`, `OrderService`) и фасад `Api`, вызываемый из JS через `pywebview.api.*`.
 - `app/templates/` — HTML-оболочки (Jinja2), рендерятся в Python и грузятся в окно через `window.load_html`.
 - `app/static/css`, `app/static/js` — стили и логика интерфейса.
-- `data/import/` — исходные Excel-файлы и фото для импорта.
-- `data/import_excel_to_db.py` — импорт данных из `data/import/*.xlsx` в `data/stroymaterialy.db`.
+- `app/static/img/` — логотип, иконка, заглушка и фото товаров.
+- `data/import/` — исходные Excel-файлы: `products_import.xlsx`, `users_import.xlsx`, `orders_import.xlsx`, `pickup_points_import.xlsx`.
+- `data/import_excel_to_db.py` — создаёт БД по `schema.sql` и импортирует в неё данные из Excel.
