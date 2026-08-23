@@ -4,12 +4,16 @@ The database schema itself comes from app/db/schema.sql (kept in sync with the
 SQLAlchemy models); this script only creates the database from that schema and
 fills it with the workbook rows.
 
+Structure: every workbook is handled by its own Importer subclass sharing the
+Importer interface, and ExcelToDbImporter runs them in dependency order.
+
 Usage: python data/import_excel_to_db.py
 """
 from __future__ import annotations
 
 import re
 import sys
+from abc import ABC, abstractmethod
 from pathlib import Path
 
 import openpyxl
@@ -31,115 +35,166 @@ from app.db.session import DB_PATH, engine, get_session  # noqa: E402
 IMPORT_DIR = BASE_DIR / "data" / "import"
 SCHEMA_PATH = BASE_DIR / "app" / "db" / "schema.sql"
 
-PRODUCTS_XLSX = IMPORT_DIR / "products_import.xlsx"
-USERS_XLSX = IMPORT_DIR / "users_import.xlsx"
-ORDERS_XLSX = IMPORT_DIR / "orders_import.xlsx"
-PICKUP_POINTS_XLSX = IMPORT_DIR / "pickup_points_import.xlsx"
+
+class WorkbookReader:
+    """Reads the first worksheet of an .xlsx file as plain row tuples."""
+
+    def __init__(self, path: Path):
+        self.path = path
+
+    def rows(self, skip_header: bool = True) -> list[tuple]:
+        worksheet = openpyxl.load_workbook(self.path, data_only=True).active
+        rows = list(worksheet.iter_rows(values_only=True))
+        return rows[1:] if skip_header else rows
 
 
-def _load_rows(path: Path, skip_header: bool = True) -> list[tuple]:
-    """Read the first worksheet as a list of row tuples."""
-    worksheet = openpyxl.load_workbook(path, data_only=True).active
-    rows = list(worksheet.iter_rows(values_only=True))
-    return rows[1:] if skip_header else rows
+class SchemaCreator:
+    """Recreates the database file and applies the SQL schema to it."""
+
+    def __init__(self, db_path: Path, schema_path: Path):
+        self._db_path = db_path
+        self._schema_path = schema_path
+
+    def create(self) -> None:
+        if self._db_path.exists():
+            self._db_path.unlink()
+        self._db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        raw = engine.raw_connection()
+        try:
+            raw.executescript(self._schema_path.read_text(encoding="utf-8"))
+            raw.commit()
+        finally:
+            raw.close()
 
 
-def create_schema() -> None:
-    """Recreate the database file and apply app/db/schema.sql to it."""
-    if DB_PATH.exists():
-        DB_PATH.unlink()
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+class Importer(ABC):
+    """Interface for importing one workbook into the database.
 
-    raw = engine.raw_connection()
-    try:
-        raw.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
-        raw.commit()
-    finally:
-        raw.close()
+    Subclasses declare which file they read (`filename`), what they are called
+    in the summary (`label`), and how a row becomes database rows (`_import`).
+    """
 
+    filename: str
+    label: str
+    skip_header: bool = True
 
-def import_products(session) -> int:
-    count = 0
-    for row in _load_rows(PRODUCTS_XLSX):
-        if not row or not row[0]:
-            continue
-        (article, name, unit, price, supplier, maker, category,
-         discount, stock_qty, description, photo) = (list(row) + [None] * 11)[:11]
+    def __init__(self, import_dir: Path = IMPORT_DIR):
+        self._reader = WorkbookReader(import_dir / self.filename)
 
-        session.add(Product(
-            article=str(article).strip(),
-            name=(name or "").strip(),
-            unit=(unit or "").strip(),
-            price=float(price or 0),
-            supplier=(supplier or "").strip(),
-            maker=(maker or "").strip(),
-            category=(category or "").strip(),
-            discount=float(discount or 0),
-            stock_qty=int(stock_qty or 0),
-            description=(description or "").strip(),
-            # Photos already live in app/static/img/products/ - the workbook only
-            # names the file, it is not copied from data/import/ any more.
-            photo_path=str(photo).strip() if photo else "",
-        ))
-        count += 1
-    session.flush()
-    return count
-
-
-def import_users(session) -> int:
-    count = 0
-    for row in _load_rows(USERS_XLSX):
-        if not row or not row[0]:
-            continue
-        role_label, full_name, login, password = row[:4]
-        role = ROLE_BY_LABEL.get((role_label or "").strip())
-        if role is None:
-            continue
-        session.add(User(
-            full_name=(full_name or "").strip(),
-            login=(login or "").strip(),
-            password_hash=generate_password_hash(str(password).strip()),
-            role=role,
-        ))
-        count += 1
-    session.flush()
-    return count
-
-
-def import_pickup_points(session) -> int:
-    # This workbook has no header row - the first row is already an address.
-    addresses = [row[0] for row in _load_rows(PICKUP_POINTS_XLSX, skip_header=False) if row and row[0]]
-    for idx, address in enumerate(addresses, start=1):
-        session.add(PickupPoint(id=idx, address=str(address).strip()))
-    session.flush()
-    return len(addresses)
-
-
-def import_orders(session) -> int:
-    users_by_fio = {u.full_name: u for u in session.query(User).all()}
-    products_by_article = {p.article: p for p in session.query(Product).all()}
-
-    count = 0
-    for row in _load_rows(ORDERS_XLSX):
-        if not row or row[0] is None:
-            continue
-        order_no, arts, order_date, delivery_date, address_no, fio, code, status = row[:8]
-        fio = (fio or "").strip()
-
-        order = Order(
-            order_no=int(order_no),
-            order_date=order_date.date() if hasattr(order_date, "date") else None,
-            delivery_date=delivery_date.date() if hasattr(delivery_date, "date") else None,
-            pickup_point_id=int(address_no) if address_no else None,
-            client_fio=fio,
-            client_user_id=users_by_fio[fio].id if fio in users_by_fio else None,
-            pickup_code=str(code or "").strip(),
-            status=(status or "").strip(),
-        )
-        session.add(order)
+    def run(self, session) -> int:
+        """Import the workbook and return how many records were added."""
+        count = self._import(session, self._reader.rows(skip_header=self.skip_header))
         session.flush()
+        return count
 
-        # "ART1, 2, ART2, 5" -> pairs of (article, quantity)
+    @abstractmethod
+    def _import(self, session, rows: list[tuple]) -> int:
+        """Add rows to the session and return the number of records imported."""
+
+
+class ProductImporter(Importer):
+    filename = "products_import.xlsx"
+    label = "Товары"
+
+    def _import(self, session, rows: list[tuple]) -> int:
+        count = 0
+        for row in rows:
+            if not row or not row[0]:
+                continue
+            (article, name, unit, price, supplier, maker, category,
+             discount, stock_qty, description, photo) = (list(row) + [None] * 11)[:11]
+
+            session.add(Product(
+                article=str(article).strip(),
+                name=(name or "").strip(),
+                unit=(unit or "").strip(),
+                price=float(price or 0),
+                supplier=(supplier or "").strip(),
+                maker=(maker or "").strip(),
+                category=(category or "").strip(),
+                discount=float(discount or 0),
+                stock_qty=int(stock_qty or 0),
+                description=(description or "").strip(),
+                # Photos already live in app/static/img/products/ - the workbook
+                # only names the file, it is not copied from data/import/.
+                photo_path=str(photo).strip() if photo else "",
+            ))
+            count += 1
+        return count
+
+
+class UserImporter(Importer):
+    filename = "users_import.xlsx"
+    label = "Пользователи"
+
+    def _import(self, session, rows: list[tuple]) -> int:
+        count = 0
+        for row in rows:
+            if not row or not row[0]:
+                continue
+            role_label, full_name, login, password = row[:4]
+            role = ROLE_BY_LABEL.get((role_label or "").strip())
+            if role is None:
+                continue
+            session.add(User(
+                full_name=(full_name or "").strip(),
+                login=(login or "").strip(),
+                password_hash=generate_password_hash(str(password).strip()),
+                role=role,
+            ))
+            count += 1
+        return count
+
+
+class PickupPointImporter(Importer):
+    filename = "pickup_points_import.xlsx"
+    label = "Пункты выдачи"
+    # This workbook has no header row - the first row is already an address.
+    skip_header = False
+
+    def _import(self, session, rows: list[tuple]) -> int:
+        addresses = [row[0] for row in rows if row and row[0]]
+        for idx, address in enumerate(addresses, start=1):
+            session.add(PickupPoint(id=idx, address=str(address).strip()))
+        return len(addresses)
+
+
+class OrderImporter(Importer):
+    filename = "orders_import.xlsx"
+    label = "Заказы"
+
+    def _import(self, session, rows: list[tuple]) -> int:
+        users_by_fio = {u.full_name: u for u in session.query(User).all()}
+        products_by_article = {p.article: p for p in session.query(Product).all()}
+
+        count = 0
+        for row in rows:
+            if not row or row[0] is None:
+                continue
+            order_no, arts, order_date, delivery_date, address_no, fio, code, status = row[:8]
+            fio = (fio or "").strip()
+
+            order = Order(
+                order_no=int(order_no),
+                order_date=order_date.date() if hasattr(order_date, "date") else None,
+                delivery_date=delivery_date.date() if hasattr(delivery_date, "date") else None,
+                pickup_point_id=int(address_no) if address_no else None,
+                client_fio=fio,
+                client_user_id=users_by_fio[fio].id if fio in users_by_fio else None,
+                pickup_code=str(code or "").strip(),
+                status=(status or "").strip(),
+            )
+            session.add(order)
+            session.flush()
+
+            self._add_items(session, order, arts, products_by_article)
+            count += 1
+        return count
+
+    @staticmethod
+    def _add_items(session, order: Order, arts, products_by_article: dict) -> None:
+        """Parse "ART1, 2, ART2, 5" into (article, quantity) pairs."""
         parts = [p.strip() for p in str(arts or "").split(",") if p.strip()]
         for i in range(0, len(parts) - 1, 2):
             article, qty = parts[i], parts[i + 1]
@@ -152,34 +207,45 @@ def import_orders(session) -> int:
                 article=article,
                 qty=int(qty),
             ))
-        count += 1
-    session.flush()
-    return count
 
 
-def main():
-    create_schema()
+class ExcelToDbImporter:
+    """Creates the database from the SQL schema and runs every importer.
 
-    session = get_session()
-    try:
-        n_products = import_products(session)
-        n_users = import_users(session)
-        n_points = import_pickup_points(session)
-        n_orders = import_orders(session)
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+    Importer order matters: orders reference users and products, so those are
+    imported first.
+    """
 
-    print(f"Товары:        {n_products}")
-    print(f"Пользователи:  {n_users}")
-    print(f"Пункты выдачи: {n_points}")
-    print(f"Заказы:        {n_orders}")
-    print(f"Схема:         {SCHEMA_PATH}")
-    print(f"БД создана:    {DB_PATH}")
+    IMPORTERS = (ProductImporter, UserImporter, PickupPointImporter, OrderImporter)
+
+    def __init__(self, db_path: Path = DB_PATH, schema_path: Path = SCHEMA_PATH):
+        self._db_path = db_path
+        self._schema_path = schema_path
+        self._schema_creator = SchemaCreator(db_path, schema_path)
+        self._importers = [importer_cls() for importer_cls in self.IMPORTERS]
+
+    def run(self) -> None:
+        self._schema_creator.create()
+
+        session = get_session()
+        try:
+            results = [(importer.label, importer.run(session)) for importer in self._importers]
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+        self._report(results)
+
+    def _report(self, results: list[tuple[str, int]]) -> None:
+        width = max(len(label) for label, _ in results) + 1
+        for label, count in results:
+            print(f"{label + ':':<{width + 1}} {count}")
+        print(f"Схема:{'':<{width - 5}} {self._schema_path}")
+        print(f"БД создана:{'':<{max(width - 10, 0)}} {self._db_path}")
 
 
 if __name__ == "__main__":
-    main()
+    ExcelToDbImporter().run()
