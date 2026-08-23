@@ -42,7 +42,7 @@ python app/main.py
 - `app/core/static_server.py` — локальный HTTP-сервер для `app/static/`.
 - `app/api/` — сервисы (`AuthService`, `SessionService`, `ProductService`, `OrderService`) и фасад `Api`, вызываемый из JS через `pywebview.api.*`.
 - `app/templates/` — HTML-оболочки (Jinja2), рендерятся в Python и грузятся в окно через `window.load_html`.
-- `app/static/css`, `app/static/js` — стили и логика интерфейса на ванильном JS (без React и сборщика); `dom.js` — небольшой помощник для сборки DOM.
+- `app/static/css`, `app/static/js` — стили и логика интерфейса на ванильном JS (без React и сборщика).
 - `app/static/img/` — логотип, иконка, заглушка и фото товаров.
 - `data/import/` — исходные Excel-файлы: `products_import.xlsx`, `users_import.xlsx`, `orders_import.xlsx`, `pickup_points_import.xlsx`.
 - `data/import_excel_to_db.py` — создаёт БД по `schema.sql` и импортирует в неё данные из Excel.
