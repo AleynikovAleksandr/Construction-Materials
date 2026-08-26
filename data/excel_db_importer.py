@@ -8,10 +8,10 @@ SQLAlchemy); скрипт только создаёт по ней базу и н
 * Strategy        — по классу на каждую книгу (ProductsStrategy, UsersStrategy,
                     PickupPointsStrategy, OrdersStrategy). Общего базового класса
                     у них нет: достаточно одинакового набора атрибутов и метода
-                    build_rows(), исполнитель работает с любым таким объектом.
-* Template Method — ImportRunner.run() задаёт неизменный порядок шагов
-                    (прочитать книгу → построить записи → сохранить), а сами шаги
-                    делегирует стратегии.
+                    build_rows().
+* Template Method — ExcelDbImporter._import_one() задаёт неизменный порядок шагов
+                    (прочитать книгу → построить записи → сохранить), а содержание
+                    шага делегирует стратегии.
 * Factory Method  — StrategyFactory.create_all() решает, какие стратегии нужны и
                     в каком порядке их применять.
 * Facade          — ExcelDbImporter скрывает за одним методом run() создание схемы,
@@ -70,18 +70,14 @@ class Value:
 
 # ---------------------------------------------------------------------- чтение
 class ExcelReader:
-    """Читает книгу Excel в DataFrame."""
-
-    # Сам pandas файлы .xlsx не разбирает — ему нужен движок чтения. По умолчанию
-    # он берёт openpyxl, поэтому движок указываем явно.
-    ENGINE = "calamine"
+    """Читает книгу Excel в DataFrame (pandas разбирает .xlsx через openpyxl)."""
 
     def __init__(self, import_dir: Path = IMPORT_DIR):
         self._import_dir = import_dir
 
     def read(self, filename: str, has_header: bool = True) -> pd.DataFrame:
         path = self._import_dir / filename
-        frame = pd.read_excel(path, header=0 if has_header else None, engine=self.ENGINE)
+        frame = pd.read_excel(path, header=0 if has_header else None)
         # Хвостовые пустые строки книги в DataFrame не нужны.
         return frame.dropna(how="all")
 
@@ -245,39 +241,13 @@ class StrategyFactory:
         ]
 
 
-# ------------------------------------------------------------------ исполнитель
-class ImportRunner:
-    """Шаблонный метод: порядок шагов фиксирован, содержание — за стратегией."""
-
-    def __init__(self, reader: ExcelReader):
-        self._reader = reader
-
-    def run(self, strategy, session) -> int:
-        frame = self._read(strategy)
-        rows = self._build(strategy, frame, session)
-        return self._persist(rows, session)
-
-    def _read(self, strategy) -> pd.DataFrame:
-        return self._reader.read(strategy.filename, strategy.has_header)
-
-    @staticmethod
-    def _build(strategy, frame: pd.DataFrame, session) -> list:
-        return strategy.build_rows(frame, session)
-
-    @staticmethod
-    def _persist(rows: list, session) -> int:
-        session.add_all(rows)
-        session.flush()
-        return len(rows)
-
-
 # ---------------------------------------------------------------------- фасад
 class ExcelDbImporter:
     """Единая точка входа: создаёт схему и наполняет базу всеми книгами."""
 
     def __init__(self, schema_creator: SchemaCreator | None = None, reader: ExcelReader | None = None):
         self._schema_creator = schema_creator or SchemaCreator()
-        self._runner = ImportRunner(reader or ExcelReader())
+        self._reader = reader or ExcelReader()
         self._strategies = StrategyFactory.create_all()
 
     def run(self) -> dict[str, int]:
@@ -285,7 +255,7 @@ class ExcelDbImporter:
 
         session = get_session()
         try:
-            counts = {s.label: self._runner.run(s, session) for s in self._strategies}
+            counts = {s.label: self._import_one(s, session) for s in self._strategies}
             session.commit()
         except Exception:
             session.rollback()
@@ -295,6 +265,14 @@ class ExcelDbImporter:
 
         self._report(counts)
         return counts
+
+    def _import_one(self, strategy, session) -> int:
+        """Порядок шагов один для всех книг, содержание шага — за стратегией."""
+        frame = self._reader.read(strategy.filename, strategy.has_header)
+        rows = strategy.build_rows(frame, session)
+        session.add_all(rows)
+        session.flush()
+        return len(rows)
 
     def _report(self, counts: dict[str, int]) -> None:
         width = max(len(label) for label in counts) + 1
