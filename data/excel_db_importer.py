@@ -72,12 +72,16 @@ class Value:
 class ExcelReader:
     """Читает книгу Excel в DataFrame."""
 
+    # Сам pandas файлы .xlsx не разбирает — ему нужен движок чтения. По умолчанию
+    # он берёт openpyxl, поэтому движок указываем явно.
+    ENGINE = "calamine"
+
     def __init__(self, import_dir: Path = IMPORT_DIR):
         self._import_dir = import_dir
 
     def read(self, filename: str, has_header: bool = True) -> pd.DataFrame:
         path = self._import_dir / filename
-        frame = pd.read_excel(path, header=0 if has_header else None)
+        frame = pd.read_excel(path, header=0 if has_header else None, engine=self.ENGINE)
         # Хвостовые пустые строки книги в DataFrame не нужны.
         return frame.dropna(how="all")
 
