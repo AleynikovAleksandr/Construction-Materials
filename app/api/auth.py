@@ -7,8 +7,6 @@ from app.db.session import get_session
 
 
 class AuthService:
-    """Verifies a login/password pair against the users table."""
-
     def authenticate(self, login: str, password: str) -> dict | None:
         session = get_session()
         try:

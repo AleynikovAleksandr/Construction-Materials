@@ -18,10 +18,7 @@ def _parse_iso_date(value):
 
 
 class OrderService:
-    """Order read/write access. Viewing requires VIEW_ORDERS, writing requires EDIT_ORDERS."""
-
     def get_all(self, role: str) -> list[dict]:
-        """Orders are staff-only data — unlike the product catalog, guest/client get nothing."""
         if not has_permission(role, "VIEW_ORDERS"):
             return []
         session = get_session()

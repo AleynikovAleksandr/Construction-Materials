@@ -26,10 +26,9 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   --surface: linear-gradient(145deg, #f6f6f9, #e9e9ec);
   --order-columns: 0.6fr 1.8fr 1fr 1fr 1fr 1.9fr 1.1fr 1fr;
 }
-/* Админ дополнительно получает колонку с кнопками правки/удаления. */
+
 .page.can-edit-orders { --order-columns: 0.6fr 1.8fr 1fr 1fr 1fr 1.9fr 1.1fr 1fr 96px; }
 
-/* Шрифт, цвет текста и сглаживание наследуются от body. */
 .page {
   min-height: 100vh; width: 100%;
   background: linear-gradient(145deg, #f4f4f7, #ebebee);
@@ -39,7 +38,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
 .hidden { display: none !important; }
 
-/* ------------------------------------------------------------- топбар */
 #topbar {
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   padding-bottom: 22px; border-bottom: 1px solid rgba(174,174,192,0.35);
@@ -88,7 +86,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   box-shadow: var(--neumo-raised); cursor: pointer; display: grid; place-items: center;
 }
 
-/* ------------------------------------------------------- общие элементы */
 .view-title { font-size: 38px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
 .view-title.centered { text-align: center; }
 
@@ -134,7 +131,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .empty-title { font-size: 18px; font-weight: 600; color: #3a3a3c; }
 .empty-hint { font-size: 14px; }
 
-/* ------------------------------------------------------------- товары */
 #toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 #toolbar .search-box { flex: 1 1 320px; min-width: 240px; }
 
@@ -177,7 +173,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .product-stat { font-size: 13px; color: #8a8a8e; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .product-actions { display: flex; gap: 10px; margin-top: 8px; }
 
-/* ------------------------------------------------------------- заказы */
 .orders-toolbar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; width: 100%;
 }
@@ -201,7 +196,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 }
 .status.new { background: rgba(245,132,46,0.16); color: #c96a1a; }
 
-/* ------------------------------------------------------------- модалка */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100; background: rgba(40,40,52,0.35);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -261,7 +255,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   box-shadow: 0 8px 20px rgba(245,132,46,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
 }
 
-/* ------------------------------------------------------------- адаптив */
 @media (max-width: 980px) {
   #topbar { grid-template-columns: 1fr auto !important; grid-template-rows: auto auto; row-gap: 16px; }
   #segmented { grid-column: 1 / -1; grid-row: 2; justify-self: center; }

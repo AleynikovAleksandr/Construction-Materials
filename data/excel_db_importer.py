@@ -1,24 +1,3 @@
-"""Импорт демо-данных из data/import/*.xlsx в базу SQLite.
-
-Схема таблиц берётся из app/db/schema.sql (он же — источник истины для моделей
-SQLAlchemy); скрипт только создаёт по ней базу и наполняет её строками из книг Excel.
-
-Устройство (без наследования, всё собирается композицией):
-
-* Strategy        — по классу на каждую книгу (ProductsStrategy, UsersStrategy,
-                    PickupPointsStrategy, OrdersStrategy). Общего базового класса
-                    у них нет: достаточно одинакового набора атрибутов и метода
-                    build_rows().
-* Template Method — ExcelDbImporter._import_one() задаёт неизменный порядок шагов
-                    (прочитать книгу → построить записи → сохранить), а содержание
-                    шага делегирует стратегии.
-* Factory Method  — StrategyFactory.create_all() решает, какие стратегии нужны и
-                    в каком порядке их применять.
-* Facade          — ExcelDbImporter скрывает за одним методом run() создание схемы,
-                    транзакцию, обход стратегий и вывод отчёта.
-
-Запуск: python data/excel_db_importer.py
-"""
 from __future__ import annotations
 
 import re
@@ -31,7 +10,7 @@ from werkzeug.security import generate_password_hash
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from app.db.models import (  # noqa: E402
+from app.db.models import (  
     Order,
     OrderItem,
     PickupPoint,
@@ -39,16 +18,13 @@ from app.db.models import (  # noqa: E402
     ROLE_BY_LABEL,
     User,
 )
-from app.db.session import DB_PATH, engine, get_session  # noqa: E402
+from app.db.session import DB_PATH, engine, get_session  
 
 IMPORT_DIR = BASE_DIR / "data" / "import"
 SCHEMA_PATH = BASE_DIR / "app" / "db" / "schema.sql"
 
 
-# --------------------------------------------------------------------- значения
 class Value:
-    """Приведение ячеек pandas к типам Python (пустая ячейка приходит как NaN)."""
-
     @staticmethod
     def text(cell) -> str:
         return "" if pd.isna(cell) else str(cell).strip()
@@ -63,29 +39,21 @@ class Value:
 
     @staticmethod
     def date(cell):
-        """Даты pandas отдаёт как Timestamp; заведомо неверные (например,
-        «30.02.2025») остаются строкой и превращаются в None."""
         return cell.date() if hasattr(cell, "date") else None
 
 
-# ---------------------------------------------------------------------- чтение
 class ExcelReader:
-    """Читает книгу Excel в DataFrame (pandas разбирает .xlsx через openpyxl)."""
-
     def __init__(self, import_dir: Path = IMPORT_DIR):
         self._import_dir = import_dir
 
     def read(self, filename: str, has_header: bool = True) -> pd.DataFrame:
         path = self._import_dir / filename
         frame = pd.read_excel(path, header=0 if has_header else None)
-        # Хвостовые пустые строки книги в DataFrame не нужны.
+
         return frame.dropna(how="all")
 
 
-# ---------------------------------------------------------------------- схема
 class SchemaCreator:
-    """Пересоздаёт файл базы и применяет к нему SQL-схему."""
-
     def __init__(self, db_path: Path = DB_PATH, schema_path: Path = SCHEMA_PATH):
         self.db_path = db_path
         self.schema_path = schema_path
@@ -103,7 +71,6 @@ class SchemaCreator:
             raw.close()
 
 
-# ------------------------------------------------------------------ стратегии
 class ProductsStrategy:
     filename = "products_import.xlsx"
     label = "Товары"
@@ -129,8 +96,8 @@ class ProductsStrategy:
                 discount=Value.number(discount),
                 stock_qty=Value.integer(stock_qty),
                 description=Value.text(description),
-                # Фотографии уже лежат в app/static/img/products/ — книга лишь
-                # называет файл, копировать из data/import/ ничего не нужно.
+
+
                 photo_path=Value.text(photo),
             ))
         return products
@@ -162,7 +129,7 @@ class UsersStrategy:
 class PickupPointsStrategy:
     filename = "pickup_points_import.xlsx"
     label = "Пункты выдачи"
-    # В этой книге нет строки заголовка — первая строка уже адрес.
+
     has_header = False
 
     def build_rows(self, frame: pd.DataFrame, session) -> list:
@@ -209,7 +176,6 @@ class OrdersStrategy:
 
     @staticmethod
     def _build_items(articles, products_by_article: dict) -> list:
-        """Разбирает строку «АРТ1, 2, АРТ2, 5» на пары «артикул — количество»."""
         parts = [part.strip() for part in Value.text(articles).split(",") if part.strip()]
 
         items = []
@@ -226,11 +192,7 @@ class OrdersStrategy:
         return items
 
 
-# -------------------------------------------------------------------- фабрика
 class StrategyFactory:
-    """Создаёт стратегии импорта в порядке зависимостей: заказы ссылаются на
-    пользователей и товары, поэтому идут последними."""
-
     @staticmethod
     def create_all() -> list:
         return [
@@ -241,10 +203,7 @@ class StrategyFactory:
         ]
 
 
-# ---------------------------------------------------------------------- фасад
 class ExcelDbImporter:
-    """Единая точка входа: создаёт схему и наполняет базу всеми книгами."""
-
     def __init__(self, schema_creator: SchemaCreator | None = None, reader: ExcelReader | None = None):
         self._schema_creator = schema_creator or SchemaCreator()
         self._reader = reader or ExcelReader()
@@ -267,7 +226,6 @@ class ExcelDbImporter:
         return counts
 
     def _import_one(self, strategy, session) -> int:
-        """Порядок шагов один для всех книг, содержание шага — за стратегией."""
         frame = self._reader.read(strategy.filename, strategy.has_header)
         rows = strategy.build_rows(frame, session)
         session.add_all(rows)

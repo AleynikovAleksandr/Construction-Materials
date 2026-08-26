@@ -7,9 +7,6 @@ from app.api.session import SessionService
 
 
 class Api:
-    """pywebview js_api facade — the only object exposed to JS as `pywebview.api.*`.
-    A thin adapter: every call is delegated to a domain service, no business logic here."""
-
     def __init__(self):
         self._session = SessionService(AuthService())
         self._products = ProductService()
@@ -22,7 +19,7 @@ class Api:
     def session_user(self) -> dict | None:
         return self._session.user
 
-    # ---------------------------------------------------------------- auth
+
     def login(self, login: str, password: str) -> dict:
         return self._session.login(login, password)
 
@@ -32,7 +29,7 @@ class Api:
     def logout(self) -> dict:
         return self._session.logout()
 
-    # ------------------------------------------------------------ products
+
     def get_products(self) -> list[dict]:
         return self._products.get_all()
 
@@ -45,7 +42,7 @@ class Api:
     def delete_product(self, article: str) -> dict:
         return self._products.delete(self._session.role, article)
 
-    # -------------------------------------------------------------- orders
+
     def get_orders(self) -> list[dict]:
         return self._orders.get_all(self._session.role)
 

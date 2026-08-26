@@ -8,14 +8,10 @@ from app.db.session import get_session
 
 
 class ProductService:
-    """Product catalog read/write access. Write operations enforce EDIT_PRODUCTS."""
-
     def __init__(self, photo_storage: PhotoStorage | None = None):
         self._photo_storage = photo_storage or PhotoStorage()
 
     def get_all(self) -> list[dict]:
-        """Full catalog is visible to every role, including guest — filtering/sorting/search
-        is a UI-only capability gated client-side (CAN_FILTER_SORT_SEARCH in main.js)."""
         session = get_session()
         try:
             return [ProductSerializer.to_dict(p) for p in session.query(Product).all()]

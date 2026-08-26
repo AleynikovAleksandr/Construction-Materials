@@ -1,6 +1,3 @@
-"""Единая таблица прав по ролям — зеркало app/static/js/permissions.js.
-Добавляйте новые права сюда и там одновременно."""
-
 PERMISSIONS = {
     "FILTER_SORT_SEARCH": ("manager", "admin"),
     "EDIT_PRODUCTS": ("admin",),

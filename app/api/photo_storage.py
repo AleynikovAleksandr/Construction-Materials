@@ -11,14 +11,10 @@ DEFAULT_PRODUCTS_IMG_DIR = STATIC_DIR / "img" / "products"
 
 
 class PhotoStorage:
-    """Persists product photos uploaded from the UI (as data: URLs) onto disk."""
-
     def __init__(self, target_dir: Path = DEFAULT_PRODUCTS_IMG_DIR):
         self._target_dir = target_dir
 
     def save(self, article: str, photo_value: str) -> str:
-        """Accepts either a data: URL (new upload) or an existing 'img/products/xxx'
-        path (unchanged photo). Returns the stored filename, or '' if there is none."""
         if not photo_value:
             return ""
         if photo_value.startswith("img/products/"):

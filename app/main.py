@@ -8,16 +8,14 @@ import webview
 APP_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(APP_DIR.parent))
 
-from app.api import Api  # noqa: E402
-from app.core.render import STATIC_DIR, render_login  # noqa: E402
-from app.core.static_server import ensure_static_server  # noqa: E402
+from app.api import Api  
+from app.core.render import STATIC_DIR, render_login  
+from app.core.static_server import ensure_static_server  
 
 APP_ICON_PATH = STATIC_DIR / "img" / "icon.ico"
 
 
 class Application:
-    """Owns the pywebview window and its js_api, and drives the initial page load."""
-
     WINDOW_TITLE = "ООО «СтройМатериалы»"
     WINDOW_SIZE = (1280, 860)
     WINDOW_MIN_SIZE = (980, 640)
@@ -32,8 +30,6 @@ class Application:
         webview.start(self._on_ready, debug=True, icon=str(APP_ICON_PATH))
 
     def _configure_devtools(self) -> None:
-        # debug=True keeps "Inspect Element" available in the window's context menu,
-        # but devtools should stay closed until the user opens them on purpose.
         webview.settings['OPEN_DEVTOOLS_IN_DEBUG'] = False
 
     def _create_window(self) -> webview.Window:

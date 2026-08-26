@@ -1,4 +1,3 @@
-/** Разметка иконок и мелкие помощники разметки. */
 class Icons {
   static SVG_ATTRS =
     'viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
@@ -27,14 +26,12 @@ class Icons {
 }
 
 class Format {
-  /** Экранирование значений из БД перед вставкой в HTML. */
   static esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, (c) => (
       { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
     ));
   }
 
-  /** "27.02.2025" -> "2025-02-27" для <input type="date">. */
   static toIsoDate(ru) {
     if (!ru) return "";
     const [d, m, y] = String(ru).split(".");
@@ -46,32 +43,24 @@ class Format {
   }
 }
 
-/**
- * Базовый класс модального окна: рисует форму, следит за полями и кнопками.
- * Наследники описывают свои поля и то, что происходит при сохранении.
- */
 class Modal {
   static PLACEHOLDER_PHOTO = "img/placeholder.png";
 
   constructor({ mode, key, form }) {
-    this.mode = mode;              // "add" | "edit"
-    this.key = key;                // артикул товара или номер заказа при правке
-    this.form = form;              // текущие значения полей
+    this.mode = mode;
+    this.key = key;
+    this.form = form;
   }
 
-  // --- то, что обязан определить наследник -------------------------------
   get title() { throw new Error("Modal.title не реализован"); }
   get fields() { throw new Error("Modal.fields не реализован"); }
   validate() { throw new Error("Modal.validate не реализован"); }
   buildPayload() { throw new Error("Modal.buildPayload не реализован"); }
   save(payload) { throw new Error("Modal.save не реализован"); }
 
-  /** Дополнительная разметка под основными полями (по умолчанию её нет). */
   extraFieldsHtml() { return ""; }
-  /** Обработчики для дополнительной разметки. */
   bindExtraFields() {}
 
-  // --- общая механика ----------------------------------------------------
   static closeCurrent() {
     const overlay = document.querySelector(".modal-overlay");
     if (overlay) overlay.remove();
@@ -105,7 +94,6 @@ class Modal {
     this.element = this.overlay.querySelector(".modal");
     this.errorText = this.overlay.querySelector(".modal-error");
 
-    // Значения полей пишем прямо в form — перерисовывать модалку не нужно.
     for (const input of this.element.querySelectorAll("[data-key]")) {
       const write = () => { this.form[input.dataset.key] = input.value; };
       input.addEventListener("input", write);
@@ -293,7 +281,6 @@ class OrderModal extends Modal {
   }
 }
 
-/** Каталог товаров: поиск, фильтр, сортировка и карточки. */
 class ProductsView {
   constructor(permissions) {
     this.permissions = permissions;
@@ -378,7 +365,6 @@ class ProductsView {
       .addEventListener("change", (e) => { this.sort = e.target.value; this.render(); });
   }
 
-  /** Делегирование: карточки пересоздаются при каждой перерисовке. */
   bindListEvents() {
     this.list.addEventListener("click", async (e) => {
       const card = e.target.closest(".product-card");
@@ -430,9 +416,6 @@ class ProductsView {
     this.render();
   }
 
-  // Фильтрация/сортировка товаров — только клиентская сторона (как в исходном макете),
-  // т.к. pywebview выполняет JS полностью. Для guest/client элементов управления нет,
-  // поэтому query/maker/sort остаются в значениях по умолчанию и список не меняется.
   visibleItems() {
     const words = this.query.trim().toLowerCase().split(/\s+/).filter(Boolean);
     let list = this.items.filter((r) => {
@@ -502,7 +485,6 @@ class ProductsView {
   }
 }
 
-/** Таблица заказов: поиск и (для администратора) правка. */
 class OrdersView {
   constructor(permissions) {
     this.permissions = permissions;
@@ -646,7 +628,6 @@ class OrdersView {
   }
 }
 
-/** Экран дашборда целиком: шапка, вкладки и оба представления. */
 class Dashboard {
   constructor(root) {
     this.root = root;

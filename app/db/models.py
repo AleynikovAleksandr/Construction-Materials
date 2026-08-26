@@ -15,7 +15,7 @@ ROLE_LABELS = {
     ROLE_MANAGER: "Менеджер",
     ROLE_CLIENT: "Авторизированный клиент",
 }
-# Обратный словарь для импорта из Excel ("Роль сотрудника" -> внутренний код роли).
+
 ROLE_BY_LABEL = {v: k for k, v in ROLE_LABELS.items()}
 
 

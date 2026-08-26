@@ -11,7 +11,6 @@ class LoginScreen {
     this.ready = window.PywebviewBridge.isReady();
   }
 
-  /** Точка входа: строит разметку, вешает обработчики, ждёт готовности моста. */
   start() {
     window.AppConfig.applyTitle("Вход");
     this.render();
@@ -121,7 +120,6 @@ class LoginScreen {
         this.submitted = false;
         this.syncSubmitState();
       }
-      // при успехе Python сам переключит окно на дашборд — здесь ничего делать не нужно
     } catch (e) {
       this.setError("Ошибка соединения с приложением");
       this.submitted = false;
