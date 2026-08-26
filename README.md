@@ -74,7 +74,7 @@ pip install -r requirements.txt
 ## Наполнение базы данных
 
 ```bash
-python data/import_excel_to_db.py
+python data/excel_db_importer.py
 ```
 
 Команда создаёт файл `data/materials.db` по схеме `app/db/schema.sql` и заполняет его
@@ -118,7 +118,7 @@ python app/main.py
 
 Замечания, которые стоит учитывать при работе с приложением.
 
-- **Данные пересоздаются при импорте.** `data/import_excel_to_db.py` удаляет базу и
+- **Данные пересоздаются при импорте.** `data/excel_db_importer.py` удаляет базу и
   создаёт её заново. Если вы добавляли товары или заказы через интерфейс, перед
   повторным импортом сохраните копию `data/materials.db`.
 - **База не хранится в репозитории.** Файл `data/materials.db` указан в `.gitignore`,
